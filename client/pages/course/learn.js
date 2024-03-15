@@ -3,16 +3,9 @@ import ReactPlayer from 'react-player'
 import Accordion from 'react-bootstrap/Accordion'
 import Section from '@/components/course/section'
 import New from '@/components/course/new'
-import {
-  BsListOl,
-  BsClockFill,
-  BsFillPlayCircleFill,
-  BsFillPeopleFill,
-  BsFillEyeFill,
-  BsArrowDown,
-  BsArrowUp,
-} from 'react-icons/bs'
+import { BsListOl, BsArrowDown, BsArrowUp } from 'react-icons/bs'
 import dynamic from 'next/dynamic'
+import CourseSubInfo from '@/components/course/course-sub-info'
 
 export default function LearnPage() {
   const ReactPlayer = dynamic(
@@ -57,19 +50,31 @@ export default function LearnPage() {
     teacher_introduction,
     article,
     units,
+    news_title,
+    news_date,
+    news_content,
   } = data
 
+  const sub_units_num = units
+    .map((v) => v.sub_units.length)
+    .reduce((a, b) => a + b)
   return (
     <>
       <div className="container">
         <h1 className="text-h1 d-flex justify-content-center my-5">{name}</h1>
-        <div className="row ">
+        <div className="row mb-5">
           {/* 播放器 */}
-          <div className="video col-xl-7 col-12 mb-5 mb-xl-0">
-            <ReactPlayer width="100%" controls="true" url="video/01.mp4" />
+          <div className="video col-xl-7 col-12 mb-2 mb-xl-0">
+            <ReactPlayer
+              width="100%"
+              height="100%"
+              controls="true"
+              url="video/01.mp4"
+            />
           </div>
           {/* 章節選擇 */}
-          <div className="scrollable col-xl-5 col-12 mb-5 mb-xl-0">
+          <div className="scrollable col-xl-5 col-12 mb-1 mb-xl-0">
+            <h5>章節選擇</h5>
             <Accordion defaultActiveKey={[]} alwaysOpen>
               {units.map((v, index) => {
                 return (
@@ -101,46 +106,12 @@ export default function LearnPage() {
           <div className="mb-5">
             <p className="text-h2">關於課程{/*ㄣ*/}</p>
             <div className="course-sub-info">
-              <div className="course-sub-info-item d-flex align-items-center">
-                <BsClockFill
-                  className="me-1 text-primary"
-                  style={{ width: '40px', fontSize: '50px' }}
-                />
-                <div className="info">
-                  <div className="label">課程時長</div>
-                  <div className="value">{total_minute}分鐘</div>
-                </div>
-              </div>
-              <div className="course-sub-info-item d-flex align-items-center">
-                <BsFillPlayCircleFill
-                  className="me-1 text-primary"
-                  style={{ width: '40px', fontSize: '50px' }}
-                />
-                <div className="info">
-                  <div className="label">單元數</div>
-                  <div className="value">2章18單元</div>
-                </div>
-              </div>
-              <div className="course-sub-info-item d-flex align-items-center">
-                <BsFillPeopleFill
-                  className="me-1 text-primary"
-                  style={{ width: '40px', fontSize: '50px' }}
-                />
-                <div className="info">
-                  <div className="label">課程總人數</div>
-                  <div className="value">{student_num}位同學</div>
-                </div>
-              </div>
-              <div className="course-sub-info-item d-flex align-items-center">
-                <BsFillEyeFill
-                  className="me-1 text-primary"
-                  style={{ width: '40px', fontSize: '50px' }}
-                />
-                <div className="info">
-                  <div className="label">觀看次數</div>
-                  <div className="value">不限觀看次數</div>
-                </div>
-              </div>
+              <CourseSubInfo
+                total_minute={total_minute}
+                units_length={units.length}
+                sub_units_num={sub_units_num}
+                student_num={student_num}
+              />
             </div>
           </div>
           {/* info end */}
@@ -149,32 +120,13 @@ export default function LearnPage() {
           <div className="news mb-5">
             <div className="d-flex justify-content-between mb-3">
               <div className="text-h2">最新消息</div>
-              <div className="text_fold">收起消息</div>
+              {/* <div className="text_fold">收起消息</div> */}
             </div>
             <div className>
               <New
-                date="2024-01-01"
-                title="訊息標題"
-                message="訊息內容，為迎接即將於下週四 1 月 25
-                      日起一連四天在南港展覽館 1 館盛大登場的「2024
-                      台北國際電玩展」，主辦單位 TCA
-                      台北市電腦公會於今日（1/15）特別舉辦展前記者會，聯合傑仕登、Wemade、台灣大哥大、集英社遊戲、光榮特庫摩、madhead、萬代南夢宮娛樂、任天堂等八家主要參展廠商代表聯袂發表展出資訊。"
-              />
-              <New
-                date="2024-01-01"
-                title="訊息標題"
-                message="訊息內容，為迎接即將於下週四 1 月 25
-                      日起一連四天在南港展覽館 1 館盛大登場的「2024
-                      台北國際電玩展」，主辦單位 TCA
-                      台北市電腦公會於今日（1/15）特別舉辦展前記者會，聯合傑仕登、Wemade、台灣大哥大、集英社遊戲、光榮特庫摩、madhead、萬代南夢宮娛樂、任天堂等八家主要參展廠商代表聯袂發表展出資訊。"
-              />
-              <New
-                date="2024-01-01"
-                title="訊息標題"
-                message="訊息內容，為迎接即將於下週四 1 月 25
-                      日起一連四天在南港展覽館 1 館盛大登場的「2024
-                      台北國際電玩展」，主辦單位 TCA
-                      台北市電腦公會於今日（1/15）特別舉辦展前記者會，聯合傑仕登、Wemade、台灣大哥大、集英社遊戲、光榮特庫摩、madhead、萬代南夢宮娛樂、任天堂等八家主要參展廠商代表聯袂發表展出資訊。"
+                date={news_date.split('T')[0]}
+                title={news_title}
+                message={news_content}
               />
             </div>
           </div>
@@ -242,6 +194,21 @@ export default function LearnPage() {
         .scrollable {
           max-height: 350px;
           overflow: auto;
+        }
+        .scrollable {
+          width: 100%;
+          padding: 0;
+        }
+        video {
+          width: 100%;
+        }
+        @media (min-width: 992px) {
+          .scrollable {
+            width: 45%;
+          }
+          .video {
+            width: 55%;
+          }
         }
         .teacher-info {
           & img {

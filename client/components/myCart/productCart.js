@@ -85,7 +85,9 @@ export default function ProductCart({
                       <div className="product-button d-flex justify-content-between ">
                         <button className="btn text-h5 text-my-black d-flex align-items-center">
                           <IoIosInformationCircleOutline size="18px" />
-                          <span className="ms-1">瀏覽詳情</span>
+                          <Link href={v.url}>
+                            <span className="ms-1">瀏覽詳情</span>
+                          </Link>
                         </button>
                         <button
                           onClick={() => {

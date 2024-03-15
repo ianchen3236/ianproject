@@ -15,6 +15,6 @@ export default async function applyModels(sequelize) {
 
   for (const filename of filenames) {
     const item = await import(pathToFileURL(path.join(modelsPath, filename)))
-    item.default(sequelize)
+    // item.default(sequelize)
   }
 }

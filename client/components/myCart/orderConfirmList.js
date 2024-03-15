@@ -9,6 +9,14 @@ import {
 import { HiOutlineTicket } from 'react-icons/hi2'
 
 export default function OrderConfirmList({ formData = {}, selectCoupon = {} }) {
+  const shippingTypeMapping = {
+    OKMARTC2C: 'OK超商',
+    UNIMARTC2C: '統一超商',
+    FAMIC2C: '全家超商',
+  }
+
+  // 使用formData.shipping的值來獲取對應的字符串
+  const shippingType = shippingTypeMapping[formData.shipping] || '未知' // 如果formData.shipping不是1、2、3之一，則顯示'未知'
   return (
     <div className="container my-4">
       <div className="card shadow-sm mb-4 border-0 rounded-lg">
@@ -42,20 +50,37 @@ export default function OrderConfirmList({ formData = {}, selectCoupon = {} }) {
             運送地址詳細資訊
           </h4>
         </div>
-        <ul className="list-group ">
-          <li className="list-group-item border-0 text-h5 text-my-balck">
-            <span>城市：</span>
-            <span className="country">{formData.country}</span>
-          </li>
-          <li className="list-group-item border-0 text-h5 text-my-balck">
-            <span>區域：</span>
-            <span className="township">{formData.township}</span>
-          </li>
-          <li className="list-group-item border-0 text-h5 text-my-balck">
-            <span>地址：</span>
-            <span className="address">{formData.address}</span>
-          </li>
-        </ul>
+        {formData.shipping !== '宅配' ? (
+          <ul className="list-group ">
+            <li className="list-group-item border-0 text-h5 text-my-balck">
+              <span>門市類型：</span>
+              <span className="country">{shippingType}</span>
+            </li>
+            <li className="list-group-item border-0 text-h5 text-my-balck">
+              <span>門市：</span>
+              <span className="township">{formData.storeName}</span>
+            </li>
+            <li className="list-group-item border-0 text-h5 text-my-balck">
+              <span>門市地址：</span>
+              <span className="address">{formData.storeAddress}</span>
+            </li>
+          </ul>
+        ) : (
+          <ul className="list-group ">
+            <li className="list-group-item border-0 text-h5 text-my-balck">
+              <span>城市：</span>
+              <span className="country">{formData.country}</span>
+            </li>
+            <li className="list-group-item border-0 text-h5 text-my-balck">
+              <span>區域：</span>
+              <span className="township">{formData.township}</span>
+            </li>
+            <li className="list-group-item border-0 text-h5 text-my-balck">
+              <span>地址：</span>
+              <span className="address">{formData.address}</span>
+            </li>
+          </ul>
+        )}
       </div>
 
       <div className="card shadow-sm mb-4 border-0 rounded-lg">

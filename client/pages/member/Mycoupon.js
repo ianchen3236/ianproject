@@ -1,7 +1,9 @@
 import React from 'react'
-import UserCoupon from '@/components/myCoupon/UserCoupon'
+import UsedCoupon from '@/components/myCoupon/UsedCoupon'
+import Tab from 'react-bootstrap/Tab'
+import Tabs from 'react-bootstrap/Tabs'
 // import couponData from '@/data/ianCoupon.json'
-import { useState,useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 const CouponPage = () => {
   // const [coupon, setCoupon] = useState(couponData)
@@ -11,7 +13,7 @@ const CouponPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:3005/api/coupon/')
+        const response = await fetch('http://localhost:3005/api/coupon/memberCoupon')
         const data = await response.json()
         setData(data)
       } catch (error) {
@@ -21,36 +23,62 @@ const CouponPage = () => {
 
     fetchData()
     console.log('data', data)
-  }, [])
+  }, []) 
+
+  
 
   return (
     <>
       <div className="coupon-container">
         <div className="coupon-content">
           <div className="coupon-content__title">我的優惠劵</div>
-          <div className="coupon-content__list">
-            {/* 可以使用 map 遍歷渲染 */}
-            <div className="coupon-content__item">
-              <div className="container">
-                <div className="row row-cols-lg-3">
-                 
-                    {data.map((v, i) => {
-                      const { coupon_name, end_at, discount_title } = v
-
-                      return (
-                        <UserCoupon
-                          key={v.id}
-                          coupon_name={coupon_name}
-                          discount={discount_title}
-                          limit_time={end_at}
-                        />
-                      )
-                    })}
-
+          <Tabs
+            defaultActiveKey="profile"
+            id="uncontrolled-tab-example"
+            className="mb-3"
+          >
+            <Tab eventKey="home" title="全部">
+              <div className="coupon-content__list">
+                {/* 可以使用 map 遍歷渲染 */}
+                <div className="coupon-content__item">
+                  <div className="container">
+                    <div className="row row-cols-lg-3">
+                      {data.map((v, i) => {
+                        const {
+                          coupon_name,
+                          end_at,
+                          discount_title,
+                          start_at,
+                        } = v
+                        {
+                          /* console.log(v.start_at) */
+                        }
+                        return (
+                          <UsedCoupon
+                            key={v.id}
+                            coupon_name={coupon_name}
+                            discount={discount_title}
+                            limit_time={start_at}
+                            end_time={end_at}
+                            onClick
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </Tab>
+            <Tab eventKey="used" title="已使用">
+              Tab content for Contact
+            </Tab>
+            <Tab eventKey="contact" title="已逾期">
+              Tab content for Contact
+            </Tab>
+            {/* <Tab eventKey="contact" title="已使用" disabled>
+              Tab content for Contact
+            </Tab> */}
+          </Tabs>
         </div>
       </div>
 

@@ -3,24 +3,23 @@ import ReactPlayer from 'react-player'
 import New from '@/components/course/new'
 import Section from '@/components/course/section'
 import Accordion from 'react-bootstrap/Accordion'
-import dynamic from 'next/dynamic'
+
 import { useRouter } from 'next/router'
+import Image from 'next/image'
 import { BsArrowDown, BsArrowUp } from 'react-icons/bs'
+import CourseSubInfo from '@/components/course/course-sub-info'
+
+import { useCart } from '@/hooks/user-cart'
 
 import {
   BsBookmarkCheckFill,
-  BsFillGiftFill,
   BsFillStarFill,
-  BsStarHalf,
   BsFillCartFill,
-  BsClockFill,
-  BsFillPlayCircleFill,
-  BsFillPeopleFill,
-  BsFillEyeFill,
   BsListOl,
 } from 'react-icons/bs'
 
 export default function CoursePage() {
+  const { addCartItem } = useCart()
   // const ReactPlayer = dynamic(() => import('react-player'), { ssr: false })
   const router = useRouter()
   const { id } = router.query
@@ -56,7 +55,7 @@ export default function CoursePage() {
     price,
     description,
     image,
-    teacher_name,
+    teacher,
     teacher_image,
     rank,
     total_minute,
@@ -64,21 +63,30 @@ export default function CoursePage() {
     teacher_introduction,
     article,
     units,
+    news_title,
+    news_date,
+    news_content,
   } = data
+  let data_send = { ...data }
+  let image_name = 'course_' + (image.split('_')[1].split('.')[0] % 25) + '.jpg'
+  data_send.image = 'http://localhost:3005/course/images/' + image_name
+  data_send.url = 'http://localhost:3000/course/' + id
+
   const sub_units_num = units
     .map((v) => v.sub_units.length)
     .reduce((a, b) => a + b)
 
-  let min = 0
-  let sec = 0
-  units.forEach((unit) => {
-    unit.sub_units.forEach((sub_unit) => {
-      min += Number(sub_unit.video_len.split(':')[0])
-      sec += Number(sub_unit.video_len.split(':')[1])
-    })
-  })
+  // let min = 0
+  // let sec = 0
+  // units.forEach((unit) => {
+  //   unit.sub_units.forEach((sub_unit) => {
+  //     min += Number(sub_unit.video_len.split(':')[0])
+  //     sec += Number(sub_unit.video_len.split(':')[1])
+  //   })
+  // })
 
-  const total_video_minute = min + Math.floor(sec / 60)
+  // const total_video_minute = min + Math.floor(sec / 60)
+  console.log(data[0])
 
   return (
     <>
@@ -88,7 +96,12 @@ export default function CoursePage() {
           {/* 課程介紹影片 */}
           {/* <video src="https://www.youtube.com/watch?v=LXb3EKWsInQ" controls /> */}
           <div className="video me-lg-4 mb-4 mb-xl-0">
-            <ReactPlayer width="100%" controls="true" url="video/01.mp4" />
+            <ReactPlayer
+              width="100%"
+              height="100%"
+              controls="true"
+              url="http://localhost:3005/course/video/01.mp4"
+            />
           </div>
           {/* 課程介紹 */}
           <div className="course_info justify-content-between d-flex flex-column ">
@@ -96,14 +109,17 @@ export default function CoursePage() {
               <div className="teacher d-flex align-items-center">
                 {/* 老師頭像 */}
                 <div className="teacher_img">
-                  <img
-                    src="https://images.pexels.com/photos/36843/lion-panthera-leo-lioness-animal-world.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-                    alt="teacher"
+                  <Image
+                    src={'http://localhost:3005/course/images/' + 'default.jpg'}
+                    width={30}
+                    height={30}
+                    style={{ borderRadius: '50%' }}
+                    alt="teacher image"
                   />
                 </div>
                 {/* 老師名字 */}
                 <div className="teacher_info">
-                  <p className="text-h5 mb-0">{`${teacher_name}`}</p>
+                  <p className="text-h5 mb-0">{`${teacher}`}</p>
                 </div>
               </div>
               {/* 課程介紹 */}
@@ -143,46 +159,66 @@ export default function CoursePage() {
             <div className="mb-5">
               <p className="text-h2">關於課程{/*ㄣ*/}</p>
               <div className="course-sub-info">
-                <div className="course-sub-info-item d-flex align-items-center">
-                  <BsClockFill
-                    className="me-1 text-primary"
-                    style={{ width: '40px', fontSize: '50px' }}
-                  />
-                  <div className="info">
-                    <div className="label">課程時長</div>
-                    <div className="value">{total_minute}分鐘</div>
-                  </div>
-                </div>
-                <div className="course-sub-info-item d-flex align-items-center">
-                  <BsFillPlayCircleFill
-                    className="me-1 text-primary"
-                    style={{ width: '40px', fontSize: '50px' }}
-                  />
-                  <div className="info">
-                    <div className="label">單元數</div>
-                    <div className="value">2章18單元</div>
-                  </div>
-                </div>
-                <div className="course-sub-info-item d-flex align-items-center">
-                  <BsFillPeopleFill
-                    className="me-1 text-primary"
-                    style={{ width: '40px', fontSize: '50px' }}
-                  />
-                  <div className="info">
-                    <div className="label">課程總人數</div>
-                    <div className="value">{student_num}位同學</div>
-                  </div>
-                </div>
-                <div className="course-sub-info-item d-flex align-items-center">
-                  <BsFillEyeFill
-                    className="me-1 text-primary"
-                    style={{ width: '40px', fontSize: '50px' }}
-                  />
-                  <div className="info">
-                    <div className="label">觀看次數</div>
-                    <div className="value">不限觀看次數</div>
-                  </div>
-                </div>
+                {/* <Container>
+                  <Row className='mb-2'>
+                    <Col>
+                      <div className="course-sub-info-item d-flex align-items-center">
+                        <BsClockFill
+                          className="me-1 text-primary"
+                          style={{ width: '40px', fontSize: '50px' }}
+                        />
+                        <div className="info">
+                          <div className="label">課程時長</div>
+                          <div className="value">{total_minute}分鐘</div>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col>
+                      <div className="course-sub-info-item d-flex align-items-center">
+                        <BsFillPlayCircleFill
+                          className="me-1 text-primary"
+                          style={{ width: '40px', fontSize: '50px' }}
+                        />
+                        <div className="info">
+                          <div className="label">單元數</div>
+                          <div className="value">{`${units.length}章${sub_units_num}單元`}</div>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col>
+                      <div className="course-sub-info-item d-flex align-items-center">
+                        <BsFillPeopleFill
+                          className="me-1 text-primary"
+                          style={{ width: '40px', fontSize: '50px' }}
+                        />
+                        <div className="info">
+                          <div className="label">課程總人數</div>
+                          <div className="value">{student_num}位同學</div>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col>
+                      <div className="course-sub-info-item d-flex align-items-center">
+                        <BsFillEyeFill
+                          className="me-1 text-primary"
+                          style={{ width: '40px', fontSize: '50px' }}
+                        />
+                        <div className="info">
+                          <div className="label">觀看次數</div>
+                          <div className="value">不限觀看次數</div>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                </Container> */}
+                <CourseSubInfo
+                  total_minute={total_minute}
+                  units_length={units.length}
+                  sub_units_num={sub_units_num}
+                  student_num={student_num}
+                />
               </div>
             </div>
             {/* info end */}
@@ -191,32 +227,13 @@ export default function CoursePage() {
             <div className="news mb-5">
               <div className="d-flex justify-content-between mb-3">
                 <div className="text-h2">最新消息</div>
-                <div className="text_fold">收起消息</div>
+                {/* <div className="text_fold">收起消息</div> */}
               </div>
               <div className>
                 <New
-                  date="2024-01-01"
-                  title="訊息標題"
-                  message="訊息內容，為迎接即將於下週四 1 月 25
-                      日起一連四天在南港展覽館 1 館盛大登場的「2024
-                      台北國際電玩展」，主辦單位 TCA
-                      台北市電腦公會於今日（1/15）特別舉辦展前記者會，聯合傑仕登、Wemade、台灣大哥大、集英社遊戲、光榮特庫摩、madhead、萬代南夢宮娛樂、任天堂等八家主要參展廠商代表聯袂發表展出資訊。"
-                />
-                <New
-                  date="2024-01-01"
-                  title="訊息標題"
-                  message="訊息內容，為迎接即將於下週四 1 月 25
-                      日起一連四天在南港展覽館 1 館盛大登場的「2024
-                      台北國際電玩展」，主辦單位 TCA
-                      台北市電腦公會於今日（1/15）特別舉辦展前記者會，聯合傑仕登、Wemade、台灣大哥大、集英社遊戲、光榮特庫摩、madhead、萬代南夢宮娛樂、任天堂等八家主要參展廠商代表聯袂發表展出資訊。"
-                />
-                <New
-                  date="2024-01-01"
-                  title="訊息標題"
-                  message="訊息內容，為迎接即將於下週四 1 月 25
-                      日起一連四天在南港展覽館 1 館盛大登場的「2024
-                      台北國際電玩展」，主辦單位 TCA
-                      台北市電腦公會於今日（1/15）特別舉辦展前記者會，聯合傑仕登、Wemade、台灣大哥大、集英社遊戲、光榮特庫摩、madhead、萬代南夢宮娛樂、任天堂等八家主要參展廠商代表聯袂發表展出資訊。"
+                  date={news_date.split('T')[0]}
+                  title={news_title}
+                  message={news_content}
                 />
               </div>
             </div>
@@ -256,8 +273,8 @@ export default function CoursePage() {
               <div className="d-flex justify-content-between mb-3">
                 <div className="d-flex">
                   <div className="text-h2">單元一覽</div>
-                  <div className="text-h5 mx-3 text-my-primary">
-                    {`共 ${sub_units_num} 單元 | 總時長${total_video_minute}分鐘`}
+                  <div className="text-h5 mx-3 text-my-primary d-none d-md-block">
+                    {`共 ${sub_units_num} 單元 | 總時長${total_minute}分鐘`}
                   </div>
                 </div>
                 <div
@@ -330,13 +347,18 @@ export default function CoursePage() {
                 <div className="teacher-info-item-title">
                   <div className="d-flex">
                     <div className="teacher-info-item-title-img">
-                      <img
-                        src="https://images.pexels.com/photos/36843/lion-panthera-leo-lioness-animal-world.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-                        alt="teacher"
+                      <Image
+                        src={
+                          'http://localhost:3005/course/images/' + 'default.jpg'
+                        }
+                        width={50}
+                        height={50}
+                        style={{ borderRadius: '50%' }}
+                        alt="teacher image"
                       />
                     </div>
                     <div className="teacher-info-item-title-info d-flex align-items-center">
-                      <p className="text-h3 mb-0 mx-3">{teacher_name}</p>
+                      <p className="text-h3 mb-0 mx-3">{teacher}</p>
                     </div>
                   </div>
                 </div>
@@ -354,9 +376,14 @@ export default function CoursePage() {
                 NT${price.toLocaleString()}
               </p>
               <div className="d-flex flex-column flex-xl-row">
-                <a className="text-decoration-none collect-btn border1 px-2">
+                <div
+                  className="text-decoration-none collect-btn border1 px-2 text-center"
+                  onClick={() => {
+                    addCartItem(data_send)
+                  }}
+                >
                   <BsFillCartFill className="mb-1" /> 加入購物車
-                </a>
+                </div>
               </div>
             </div>
           </aside>
@@ -376,10 +403,10 @@ export default function CoursePage() {
         }
         @media (min-width: 992px) {
           .course_info {
-            width: 50%;
+            width: 45%;
           }
           .video {
-            width: 50%;
+            width: 55%;
           }
         }
         .teacher {
@@ -441,7 +468,6 @@ export default function CoursePage() {
           .course-sub-info-item {
             display: flex;
             align-items: flex-start;
-            margin-right: 30px;
 
             & i {
               font-size: 40px;

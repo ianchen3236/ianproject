@@ -6,30 +6,43 @@ import 'swiper/css/navigation'
 import 'swiper/css/thumbs'
 import { Autoplay, FreeMode, Navigation, Thumbs } from 'swiper/modules'
 
-// 根据产品图片命名规则生成图片数组
 const getProductImages = (imageName) => {
-  // 提取基础名称
-  const baseName = imageName.split('-')[0];
-  const images = [];
-  for (let i = 1; i <= 4; i++) {
-    // 假设您最多有4张图片
-    images.push(`/images/myProduct/${baseName}-${i}.jpg`);
+  // 提取基礎名稱
+  const baseName = imageName.split('-')[0]
+  const images = []
+  for (let i = 1; i <= 9; i++) {
+    // 構建圖片路徑
+    const imagePath = `/images/myProduct/${baseName}-${i}.jpg`
+    // 檢查圖片是否存在，如果存在則添加到圖片數組中
+    if (imageExists(imagePath)) {
+      images.push(imagePath)
+    } else {
+      // 如果圖片不存在，則跳出循環
+      break
+    }
   }
-  return images;
-};
+  return images
+}
 
-export default function Carousel({ products }) {
-  const [thumbsSwiper, setThumbsSwiper] = useState(null);
+// 檢查圖片是否存在的輔助函數
+const imageExists = (url) => {
+  var http = new XMLHttpRequest()
+  http.open('HEAD', url, false)
+  http.send()
+  return http.status != 404
+}
 
-  // 使用 useMemo 缓存所有产品的图片数组
-  const allProductImages = useMemo(() => {
-    return products.map((product) => getProductImages(product.image)).flat();
-  }, [products]);
-
-  // 过滤只包含当前产品图片的数组
-  const currentProductImages = allProductImages.filter((image) =>
-    image.includes(products[0].image.split('-')[0])
-  );
+export default function Carousel({ products, pid }) {
+  const [thumbsSwiper, setThumbsSwiper] = useState(null)
+  const product = products.find((product) => product.product_id == pid)
+  // 使用 useMemo 缓存特定产品的图片数组
+  const currentProductImages = useMemo(() => {
+    // 找到与 pid 对应的产品
+    // 如果找到了相应的产品，则生成与该产品相关的图片数组
+    if (product) {
+      return getProductImages(product.image)
+    }
+  }, [product])
 
   return (
     <>
@@ -38,6 +51,7 @@ export default function Carousel({ products }) {
           style={{
             '--swiper-navigation-color': 'gray',
             '--swiper-pagination-color': '#fff',
+            maxHeight: '600px',
           }}
           autoplay={{
             delay: 2500,
@@ -60,12 +74,16 @@ export default function Carousel({ products }) {
         </Swiper>
         <Swiper
           onSwiper={setThumbsSwiper}
-          spaceBetween={10}
+          spaceBetween={3}
           slidesPerView={4}
           freeMode={true}
           watchSlidesProgress={true}
           modules={[FreeMode, Navigation, Thumbs]}
           className="mySwiper"
+          style={{
+            maxHeight: '150px',
+            marginTop: '3px'
+          }}
         >
           {currentProductImages.map((image, index) => (
             <SwiperSlide key={index}>
@@ -78,5 +96,5 @@ export default function Carousel({ products }) {
         </Swiper>
       </div>
     </>
-  );
+  )
 }

@@ -1,13 +1,17 @@
-import React from 'react'
+import React from 'react';
 
 export default function AreaFilter({
-  north,
-  setNorth,
-  middle,
-  setMiddle,
-  south,
-  setSouth,
+  area,
+  setArea
 }) {
+  const toggleArea = (selectedArea) => {
+    if (area.includes(selectedArea)) {
+      setArea(area.filter(item => item !== selectedArea));
+    } else {
+      setArea([...area, selectedArea]);
+    }
+  };
+
   return (
     <>
       <div
@@ -19,9 +23,8 @@ export default function AreaFilter({
           type="checkbox"
           className="btn-check px-0"
           id="btn-check-n"
-          checked={north}
-          onChange={() => setNorth(!north)}
-          value={north}
+          checked={area.includes('n')}
+          onChange={() => toggleArea('n')}
         />
         <label className="btn px-0 btn-outline-primary" htmlFor="btn-check-n">
           北
@@ -36,9 +39,8 @@ export default function AreaFilter({
           type="checkbox"
           className="btn-check px-0"
           id="btn-check-m"
-          checked={middle}
-          onChange={() => setMiddle(!middle)}
-          value={middle}
+          checked={area.includes('m')}
+          onChange={() => toggleArea('m')}
         />
         <label className="btn px-0 btn-outline-primary" htmlFor="btn-check-m">
           中
@@ -53,9 +55,8 @@ export default function AreaFilter({
           type="checkbox"
           className="btn-check px-0"
           id="btn-check-s"
-          checked={south}
-          onChange={() => setSouth(!south)}
-          value={south}
+          checked={area.includes('s')}
+          onChange={() => toggleArea('s')}
         />
         <label className="btn px-0 btn-outline-primary" htmlFor="btn-check-s">
           南
@@ -66,16 +67,16 @@ export default function AreaFilter({
           min-width: 60px;
           margin-inline: 5px;
         }
-        input[type='checkbox'] + label{
+        input[type='checkbox'] + label {
           background-color:white;
           color:#ff0083;
           border:1px solid #ff0083;
         }
-        input[type='checkbox']:checked + label{
+        input[type='checkbox']:checked + label {
           background-color:#ff0083;
           color:white;
         }
       `}</style>
     </>
-  )
+  );
 }

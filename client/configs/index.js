@@ -34,7 +34,8 @@ export const pathsLocaleMap = {
   'test':'測試',
   'user':'會員',
   'course':'課程',
-  'service':'維修與服務',
+  'service':'服務據點',
+  'support':'線上預約',
   'confirmation':'檢查訂單',
   'checkout':'收件人與運送資料'
 }

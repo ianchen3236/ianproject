@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState,useEffect } from 'react'
 import { CiShop } from 'react-icons/ci'
 import { FaInfoCircle } from 'react-icons/fa'
 import { RiArrowGoBackFill } from 'react-icons/ri'
@@ -7,15 +7,18 @@ import { FaLocationDot } from 'react-icons/fa6'
 import { FaPhone } from 'react-icons/fa6'
 import { IoTime } from 'react-icons/io5'
 
-export default function StoreInfo({ storeData, setStoreData }) {
+export default function StoreInfo({ storeData, setStoreData,storeDetail ,setStoreDetail }) {
   const [isHidden, setIsHidden] = useState(false)
-  const [storeDetail, setStoreDetail] = useState(null) // 添加 storeDetail 状态
 
   const handleAClick = (detail) => {
     // 修改 handleAClick 函数，接收店铺详细信息作为参数
     setStoreDetail(detail)
     setIsHidden(true)
   }
+  useEffect(() => {
+    // 当 storeDetail 不为空时，显示店铺详情
+    setIsHidden(!!storeDetail);
+  }, [storeDetail]);
 
   return (
     <>
@@ -35,8 +38,8 @@ export default function StoreInfo({ storeData, setStoreData }) {
                 返回列表
               </a>
             </div>
-            <div className="store-img-div mx-auto mb-3">
-              <img src={storeDetail.img} alt="" />
+            <div className="store-img-div mx-auto">
+              <img src={`images/myService/${storeDetail.img}`} alt="" />
             </div>
             <div>
               <ul className='mb-0'>
@@ -60,28 +63,34 @@ export default function StoreInfo({ storeData, setStoreData }) {
             </div>
           </div>
         ) : (
-          <ul className="list-ul">
-            {storeData.map(
-              (
-                store,
-                index // 假设 storeData 是存储所有店铺信息的数组
-              ) => (
-                <li key={index}>
-                  <h5 className="d-flex justify-content-between">
-                    <span className="store-icon">
-                      <CiShop />
-                      {store.name}
-                    </span>
-                    <span className="info-icon">
-                      <FaInfoCircle onClick={() => handleAClick(store)} />{' '}
-                      {/* 传递当前店铺详细信息给 handleAClick 函数 */}
-                    </span>
-                  </h5>
-                  <span>{store.address}</span>
-                </li>
-              )
+          <>
+            {storeData.length === 0 ? (
+              <p className="no-data-message mt-1 text-h3">查無相符條件的據點</p>
+            ) : (
+              <ul className="list-ul">
+                {storeData.map(
+                  (
+                    store,
+                    index // 假设 storeData 是存储所有店铺信息的数组
+                  ) => (
+                    <li key={index}>
+                      <h5 className="d-flex justify-content-between">
+                        <span className="store-icon">
+                          <CiShop />
+                          {store.name}
+                        </span>
+                        <span className="info-icon">
+                          <FaInfoCircle onClick={() => handleAClick(store)} />{' '}
+                          {/* 传递当前店铺详细信息给 handleAClick 函数 */}
+                        </span>
+                      </h5>
+                      <span>{store.address}</span>
+                    </li>
+                  )
+                )}
+              </ul>
             )}
-          </ul>
+          </>
         )}
       </div>
       <style jsx>{`
@@ -92,7 +101,6 @@ export default function StoreInfo({ storeData, setStoreData }) {
         }
         .list-ul li {
           list-style-type: none;
-          list-style-image: url('placeholder.png');
           border-bottom: 1px solid black;
         }
         .info-icon:hover {
@@ -112,10 +120,16 @@ export default function StoreInfo({ storeData, setStoreData }) {
         
         .store-detail ul {
           list-style: none;
+          padding-right:36px;
         }
         .store-detail li {
           border-bottom: 1px solid black;
           margin-bottom: 10px;
+        }
+        .no-data-message {
+          text-align: center;
+          font-weight: bold;
+          color: #ff0083;
         }
       `}</style>
     </>

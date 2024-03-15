@@ -51,7 +51,7 @@ export default function CardGroup({ data }) {
 
   return (
     <>
-      <div className="">
+      <div className="mb-5">
         <Row xs={1} md={3} className="g-4">
           {data.map((item, idx) => (
             <Col key={idx}>

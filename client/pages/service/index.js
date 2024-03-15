@@ -14,54 +14,38 @@ import teststoreData from '@/data/store2.json' //店家列表測試用資料
 export default function RepairAndServicePage() {
   //首次渲染顯示所有店
   const [loading, setLoading] = useState(false) //監聽到請求時，執行加載動畫
-  const [north, setNorth] = useState(true) //北
-  const [middle, setMiddle] = useState(true) //中
-  const [south, setSouth] = useState(true) //南
+  const [area, setArea] = useState(['n', 'm', 's'])
   const [openTime, setOpenTime] = useState('') //開店時間
   const [closeTime, setCloseTime] = useState('') //閉店時間
   const [textSearch, setTextSearch] = useState('') //關鍵字輸入
-  const [geojsonData, setGeojsonData] = useState(null) //用於地圖區的資料
-  const [storeData, setStoreData] = useState(null) //用於訊息區的資料
+  const [geojsonData, setGeojsonData] = useState([]) //用於地圖區的資料
+  const [storeData, setStoreData] = useState([]) //用於訊息區的資料
+  const [storeDetail, setStoreDetail] = useState(null) // 添加 storeDetail 状态
+
 
   //頁面上方用於展開的動畫，只在初次渲染時執行一次
   useEffect(() => {
     import('@/utils/serviceTool/serviceIndex.js')
   }, [])
 
-  //依據操作向後端請求資料，先根據每次操作的當下組合請求參數(區域變化、時間變化、關鍵字輸入)，組合後再發出請求，合格的value才組合並發送
+  //依據操作向後端請求資料，(區域變化、時間變化、關鍵字輸入)
   useEffect(() => {
     const combineValue = () => {
-      let url = '/api/stores?'
-      if (north) {
-        url += `north=true&`
-      }
-      if (middle) {
-        url += `middle=true&`
-      }
-      if (south) {
-        url += `south=true&`
-      }
-      if (openTime && closeTime) {
-        url += `openTime=${openTime}&closeTime=${closeTime}&`
-      }
-      if (textSearch) {
-        url += `textSearch=${textSearch}&`
-      }
-      //如果url最後一個字是"&"，則"&"會被自動清除
-      url = url.replace(/&$/, '')
+      const apiUrl = new URL('http://localhost:3005/api/service')
+      let searchParams = new URLSearchParams({
+        area: area,
+        openTime: openTime,
+        closeTime: closeTime,
+        textSearch: textSearch,
+      })
+      apiUrl.search = searchParams
 
-      fetch(url)
+      fetch(apiUrl.href)
         .then((res) => {
-          return response.json()
-          
-          //這個function到時要放在監聽請求，有發送請求就執行這個function
-          const handleRequest = () => {
-            setLoading(true) // 发出请求时设置加载状态为 true
-            // 模拟请求
-            setTimeout(() => {
-              setLoading(false) // 模拟请求完成后，设置加载状态为 false
-            }, 1000) // 假设请求耗时 3 秒
+          if (!res.ok) {
+            throw new Error('Network response was not ok')
           }
+          return res.json()
         })
         .then((data) => {
           //接回來後要處理成一份json和一份geojson
@@ -72,7 +56,17 @@ export default function RepairAndServicePage() {
           console.error('Error fetching data:', error)
         })
     }
-  }, [north, middle, south, openTime, closeTime, textSearch]) //有value改變時，就發請求
+    combineValue()
+    //這個function到時要放在監聽請求，有發送請求就執行這個function
+    const handleRequest = () => {
+      setLoading(true) // 发出请求时设置加载状态为 true
+      setTimeout(() => {
+        setLoading(false) // 模拟请求完成后，设置加载状态为 false
+      }, 1000)
+    }
+    handleRequest()
+
+  }, [area, openTime, closeTime, textSearch]) //有value改變時，就發請求
 
   return (
     <>
@@ -83,21 +77,11 @@ export default function RepairAndServicePage() {
         </div>
       </section>
       <div className="row">
-        {/* 下方btn為測試用
-        <button onClick={handleRequest}>发出请求</button> */}
-
         <Progress loading={loading} setLoading={setLoading} />
       </div>
       <div className="filter my-3 row align-items-center  justify-content-evenly justify-content-lg-center  mx-0">
         <div className="col-md-3 col-8 text-center  my-2 d-flex justify-content-md-evenly justify-content-center">
-          <AreaFilter
-            north={north}
-            setNorth={setNorth}
-            middle={middle}
-            setMiddle={setMiddle}
-            south={south}
-            setSouth={setSouth}
-          />
+          <AreaFilter area={area} setArea={setArea} />
         </div>
         <div className="col-md-3 col-8 text-center p-0 my-2 d-flex justify-content-md-evenly justify-content-center">
           <TimeFilter
@@ -114,15 +98,18 @@ export default function RepairAndServicePage() {
       </div>
       <div className="info d-flex row mx-5 mb-5">
         <div className="left col-md-6 px-0 text-center">
-          <Map geojsonData={testmapData} setGeojsonData={setGeojsonData} />
+          <Map geojsonData={geojsonData} setGeojsonData={setGeojsonData} setStoreDetail={setStoreDetail}/>
         </div>
         <div className="right col-md-6 px-0">
-          <StoreInfo storeData={teststoreData} setStoreData={setStoreData} />
+          <StoreInfo storeData={storeData} setStoreData={setStoreData} storeDetail={storeDetail} setStoreDetail={setStoreDetail}/>
         </div>
       </div>
 
-      {/* 把定位樣式放在page可以嗎? */}
+      {/* 把定位樣式放在page */}
       <style jsx>{`
+      .info{
+        
+      }
         .contactDiv {
           position: relative;
         }
@@ -141,7 +128,12 @@ export default function RepairAndServicePage() {
         }
         .right {
           border-left: 2px solid black;
+          max-height:50vh;
+        overflow-y:auto;
         }
+
+
+        
         @media screen and (max-width: 391px) {
           .right {
             margin-top: 20px;

@@ -1,4 +1,5 @@
-import express from 'express'
+import express, { query } from 'express'
+import moment from 'moment'
 
 //連接資料庫
 import mydb from '##/configs/mydb.js'
@@ -6,9 +7,16 @@ import mydb from '##/configs/mydb.js'
 // line pay使用npm套件 串接流程簡化成只要呼叫 SDK 的 API 就可以完成
 import { createLinePayClient } from 'line-pay-merchant'
 
+//綠界物流 sdk
+import ecpay_logistics from 'ecpay_logistics_nodejs/index.js'
+
 // 產生uuid用
 import { v4 as uuidv4 } from 'uuid'
-const router = express.Router()
+
+//產生當下時間 格式：YYYY/MM/DD HH:mm:ss
+function getCurrentTransactionTime() {
+  return moment().format('YYYY/MM/DD HH:mm:ss')
+}
 
 // 存取`.env`設定檔案使用
 import 'dotenv/config.js'
@@ -20,7 +28,7 @@ const linePayClient = createLinePayClient({
   env: process.env.NODE_ENV,
 })
 
-// import sampleData from '../data/linepay/sampleData.js'
+const router = express.Router()
 
 /* GET home page */
 router.get('/', (req, res) => {
@@ -42,14 +50,22 @@ router.post('/creatOrder', async (req, res) => {
   //要生成給資料庫的資料 進行formData解構
   const {
     shipping,
+
+    // 宅配＆與c2c共用資料
     firstName,
     lastName,
     email,
     mobilePhone,
+    // 宅配
     country,
     township,
     postcode,
     address,
+    //c2c
+    storeID,
+    storeName,
+    storeAddress,
+    // 發票
     invoiceType,
     mobileBarcode,
     payType,
@@ -86,9 +102,13 @@ router.post('/creatOrder', async (req, res) => {
     await connection.beginTransaction()
 
     //先寫入到 `order_info`
-    const [orderInfoResult] = await connection.execute(
-      'INSERT INTO `order_info` (firstname,lastname,email,mobilephone,country,township,postcode,address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [
+    //判斷是宅配還是c2c
+    let query = ''
+    let queryParams = []
+    if (shipping === '宅配') {
+      query =
+        'INSERT INTO `order_info` (firstname,lastname,email,mobilephone,country,township,postcode,address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      queryParams = [
         firstName,
         lastName,
         email,
@@ -98,7 +118,20 @@ router.post('/creatOrder', async (req, res) => {
         postcode,
         address,
       ]
-    )
+    } else {
+      query =
+        'INSERT INTO `order_info` (firstname,lastname,email,mobilephone,store_id,store_name,store_address) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      queryParams = [
+        firstName,
+        lastName,
+        email,
+        mobilePhone,
+        storeID,
+        storeName,
+        storeAddress,
+      ]
+    }
+    const [orderInfoResult] = await connection.execute(query, queryParams)
     // 取出order_info的id
     const orderInfoId = orderInfoResult.insertId
 
@@ -235,7 +268,7 @@ router.get('/reserve', async (req, res) => {
       //     message: linePayResponse.body.info.paymentUrl.web,
       //   })
       // }
-      console.log(linePayResponse.body.info.paymentUrl.web)
+      // console.log(linePayResponse.body.info.paymentUrl.web)
 
       res.redirect(linePayResponse.body.info.paymentUrl.web)
     } catch (err) {
@@ -327,7 +360,152 @@ router.get('/confirm', async (req, res) => {
       if (connection) await connection.release()
     }
 
-    return res.json({ status: 'success', data: linePayResponse.body })
+    /* 若linepay支付成功 建立綠界物流訂單 */
+    // 用來將ecpay物流傳到前端的容器
+    let ecPay = {}
+    if (status === 'paid') {
+      //透過order_id找到order_info資料
+      const [results] = await connection.execute(
+        'SELECT order_info.*,order.shipping,order.amount FROM order_info JOIN `order` ON order_info.id = `order`.`order_info_id` WHERE `order`.id = ?',
+        [dbLinePay.order_id]
+      )
+      let ecPayData = results[0]
+      console.log(ecPayData)
+
+      //建立廠商訂單編號
+      const uuid = uuidv4().replace(/-/g, '')
+      const uuid20 = uuid.substring(0, 20)
+      const transactionTime = getCurrentTransactionTime()
+      let base_param
+      // 判定是宅配訂單還是c2c訂單
+      if (ecPayData.shipping === '宅配') {
+        base_param = {
+          MerchantTradeNo: uuid20, // 請帶20碼uid, ex: f0a0d7e9fae1bb72bc93, 為aiocheckout時所產生的
+          MerchantTradeDate: transactionTime, // 請帶交易時間, ex: 2017/05/17 16:23:45, 為aiocheckout時所產生的
+          LogisticsType: 'Home',
+          LogisticsSubType: 'TCAT', //黑貓
+          GoodsAmount: ecPayData.amount.toString(), //商品價格 1元以上
+          CollectionAmount: 'N',
+          IsCollection: 'N',
+          GoodsName: '墨韻雅筆', //品牌方店名
+          SenderName: '墨韻雅筆', //品牌方店名
+          SenderPhone: '29788833', //品牌方聯繫電話
+          SenderCellPhone: '0912345678', //品牌方聯繫行動電話
+          ReceiverName: `${ecPayData.firstname}${ecPayData.lastname}`,
+          ReceiverPhone: '',
+          ReceiverCellPhone: ecPayData.mobilephone,
+          ReceiverEmail: ecPayData.email,
+          TradeDesc: '',
+          ServerReplyURL:
+            'https://fdaf-2001-b400-e3d3-10c8-7dd8-737f-2fc3-94cc.ngrok-free.app/api/ecpay-shipping/shipment-status-notification', // 物流狀況會通知到此URL
+          ClientReplyURL: '',
+          LogisticsC2CReplyURL: '',
+          Remark: '',
+          PlatformID: '',
+          SenderZipCode: '113',
+          SenderAddress: '台北市南港區三重路19-1號6-1樓',
+          ReceiverZipCode: ecPayData.postcode,
+          ReceiverAddress:
+            ecPayData.country + ecPayData.township + ecPayData.address,
+          Temperature: '0001',
+          Distance: '00',
+          Specification: '0001',
+          ScheduledPickupTime: '4', //收貨時間（寄件方）
+          ScheduledDeliveryTime: '4', //收貨時間（收件方）  1: 13點前 2: 14點~18點  3: 14點~18點     4:不限時
+          ScheduledDeliveryDate: '',
+          PackageCount: '',
+        }
+      } else {
+        base_param = {
+          MerchantTradeNo: uuid20, // 請帶20碼uid, ex: f0a0d7e9fae1bb72bc93, 為aiocheckout時所產生的
+          MerchantTradeDate: transactionTime, // 請帶交易時間, ex: 2017/05/17 16:23:45, 為aiocheckout時所產生的
+          LogisticsType: 'CVS', //超商取貨：CVS 宅配:Home
+          LogisticsSubType: ecPayData.shipping, //四大超商物流UNIMART、FAMI、HILIFE、UNIMARTC2C、FAMIC2C、HILIFEC2C、OKMARTC2C  & 黑貓：TCAT
+          GoodsAmount: ecPayData.amount.toString(), //商品金額範圍為1~20000元。
+          CollectionAmount: ecPayData.amount.toString(), //同上
+          IsCollection: 'N', //Ｙ:貨到付款  ,預設值為N:純配送
+          GoodsName: '墨韻雅筆', //品牌名
+          SenderName: '墨韻雅筆', //品牌名
+          SenderPhone: '29788833',
+          SenderCellPhone: '0912345678',
+          ReceiverName: `${ecPayData.firstname}${ecPayData.lastname}`,
+          ReceiverPhone: '',
+          ReceiverCellPhone: ecPayData.mobilephone,
+          ReceiverEmail: ecPayData.email,
+          TradeDesc: '',
+          ServerReplyURL:
+            'https://fdaf-2001-b400-e3d3-10c8-7dd8-737f-2fc3-94cc.ngrok-free.app/api/ecpay-shipping/shipment-status-notification', // 物流狀況會通知到此URL,因本地測試無法收到,透過電腦終端設置ngrok轉發過來
+          ClientReplyURL: '',
+          LogisticsC2CReplyURL: 'http://localhost:3000/',
+          Remark: '',
+          PlatformID: '',
+          ReceiverStoreID: ecPayData.store_id, // 請帶收件人門市代號(統一):991182  測試商店代號(全家):001779 測試商店代號(萊爾富):2001、F227
+          ReturnStoreID: '', //未設定會返回原寄件門市
+        }
+      }
+
+      // Object.entries(base_param).forEach(([key, value]) => {
+      //   console.log(`${key}: ${value} (${typeof value})`)
+      // })
+
+      // 綠界物流 API
+      let create = new ecpay_logistics()
+      try {
+        const resEcpay = await create.create_client.create(base_param)
+
+        // 檢查 API 返回的數據類型，確認它是字符串類型
+        if (typeof resEcpay === 'string') {
+          console.log('API 回應:', resEcpay)
+
+          // 假設字符串是一個查詢字符串，並使用 URLSearchParams 進行解析
+          // 由於字符串以 '1|' 開頭，我們使用 substring(2) 來去除這兩個字符
+          const params = new URLSearchParams(resEcpay.substring(2))
+
+          // 從參數構造 ecPay 對象
+          const ecPay = {}
+          for (const [key, value] of params) {
+            ecPay[key] = decodeURIComponent(value)
+          }
+
+          console.log('構造的 ecPay 對象:', ecPay) // 輸出構造的 ecPay 對象
+
+          //更新訂單資料庫狀態
+          let query = ''
+          let queryParams = []
+          if (ecPayData.shipping === '宅配') {
+            query =
+              'UPDATE order_info SET logistics_id = ?, paymentNo = ?, rtn_msg= ? WHERE id = ?'
+            queryParams = [
+              ecPay.AllPayLogisticsID,
+              ecPay.BookingNote,
+              ecPay.RtnMsg,
+              ecPayData.id,
+            ]
+          } else {
+            query =
+              'UPDATE order_info SET logistics_id = ?, paymentNo = ?, rtn_msg= ? WHERE id = ?'
+            queryParams = [
+              ecPay.AllPayLogisticsID,
+              ecPay.CVSPaymentNo,
+              ecPay.RtnMsg,
+              ecPayData.id,
+            ]
+          }
+          const [result] = await mydb.execute(query, queryParams)
+        } else {
+          console.log('未預期的響應類型:', typeof resEcpay)
+        }
+      } catch (err) {
+        console.error('API 調用過程中出錯:', err)
+      }
+    }
+
+    return res.json({
+      status: 'success',
+      message: 'linePay金流與ecPay物流成功',
+      data: linePayResponse.body,
+      ecPay,
+    })
   } catch (error) {
     return res.json({ status: 'fail', data: error.data })
   }

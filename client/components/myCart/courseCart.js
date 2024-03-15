@@ -48,9 +48,9 @@ export default function CourseCart({
                           </div>
                         </li>
                         <li className="d-flex justify-content-between">
-                          <div className="label text-h5">時數：</div>
+                          <div className="label text-h5">分鐘：</div>
                           <div className="value text-h6 my-auto">
-                            {v.total_minute}小時
+                            {v.total_minute}分鐘
                           </div>
                         </li>
                         <li className="d-flex justify-content-between">
@@ -74,7 +74,9 @@ export default function CourseCart({
                         <div className="product-button d-flex justify-content-between ">
                           <button className="btn text-h5 text-my-black d-flex align-items-center">
                             <IoIosInformationCircleOutline size="18px" />
-                            <span className="ms-1">瀏覽詳情</span>
+                            <Link href={v.url}>
+                              <span className="ms-1">瀏覽詳情</span>
+                            </Link>
                           </button>
                           <button
                             onClick={() => {

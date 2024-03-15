@@ -3,66 +3,34 @@ import ProductFigure from '@/components/myProduct/productfigure'
 import Slider from 'rc-slider'
 import 'rc-slider/assets/index.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck, faSliders, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
 import Typography from '@mui/material/Typography'
 import Slide from '@mui/material/Slide'
 import Pagination from '@/components/myProduct/pagination'
-import productsData from '@/data/myProduct.json'
-import brand from '@/data/myBrand.json'
-import nib from '@/data/myNib.json'
-import material from '@/data/myMaterial.json'
-import color from '@/data/myColor.json'
 import ScrollToTopButton from '@/components/myProduct/upbutton'
 import Link from 'next/link'
-
+import SearchForm from '@/components/myProduct/search-form'
+import { FaSliders } from 'react-icons/fa6'
 export default function List() {
   const [isMobile, setIsMobile] = useState(false)
   const [open, setOpen] = useState(false)
   const [showMore, setShowMore] = useState(false)
-  const [products, setProducts] = useState([])
+  const [product, setProduct] = useState([])
+  const [nib, setNib] = useState([])
+  const [color, setColor] = useState([])
+  const [brand, setBrand] = useState([])
+  const [material, setMaterial] = useState([])
   const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
   const handleSubmit = () => {
-    // 处理提交逻辑
-    setOpen(false) // 提交后关闭模态
+    // 處理提交邏輯
+    setOpen(false) // 提交後關閉模態
   }
 
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth <= 991)
-    }
-
-    // 初始加载时触发一次检测
-    checkIsMobile()
-
-    // 监听窗口大小变化
-    window.addEventListener('resize', checkIsMobile)
-
-    // 清理函数
-    return () => {
-      window.removeEventListener('resize', checkIsMobile)
-    }
-  }, [])
-  useEffect(() => {
-    // 这里模拟从后端获取产品数据
-    setProducts(productsData)
-  }, [])
-  // const [product, setproduct] = useState([])
-  // useEffect(() => {
-  //   fetch('http://localhost:3005/api/product/list')
-  //     .then((response) => response.json())
-  //     .then((product) => setproduct(product))
-  //     .catch((error) => console.error('Error:', error))
-  // }, [])
-  // console.log(product)
-  const minPrice = Math.min(...productsData.map((product) => product.price))
-  const maxPrice = Math.max(...productsData.map((product) => product.price))
-
-  // 将最小和最大价格用于初始化价格范围
-  const initialPriceRange = [minPrice, maxPrice]
-  const [priceRange, setPriceRange] = useState(initialPriceRange) // 默认价格区间
+  const initialPriceRange = [1, 50000]
+  const [priceRange, setPriceRange] = useState(initialPriceRange) // 默認價格區間
   const formatPrice = (price) => {
     const numericPrice = parseFloat(price)
     return numericPrice.toLocaleString()
@@ -74,8 +42,15 @@ export default function List() {
   const [selectedColors, setSelectedColors] = useState([])
   const [selectedMaterials, setSelectedMaterials] = useState([])
   const [selectedNibs, setSelectedNibs] = useState([])
+  const [selectedBrand, setSelectedBrand] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const handleSearch = (query) => {
+    setSearchQuery(query)
+  }
   const [isPressed] = useState(false)
-
+  const handleBrandClick = (brandName) => {
+    setSelectedBrand(brandName)
+  }
   const clearAllSelections = () => {
     setSelectedColors([])
     setSelectedMaterials([])
@@ -126,60 +101,170 @@ export default function List() {
 
   const [currentPage, setCurrentPage] = useState(1)
   const productsPerPage = 12
-  const totalPages = Math.ceil(products.length / productsPerPage)
+  const [totalPages, setTotalPages] = useState(0) // 總頁數
   const startIndex = (currentPage - 1) * productsPerPage
-  const endIndex = Math.min(startIndex + productsPerPage, products.length)
+  const endIndex = Math.min(startIndex + productsPerPage, product.length)
 
-  // 处理页码变化的函数
+  // 處理頁碼變化的函數
   const handlePageChange = (page) => {
-    // 这里可以根据页码做一些处理，例如获取新的产品列表等
+    // 這裡可以根據頁碼做一些處理，例如獲取新的產品列表等
     setCurrentPage(page)
   }
-  const filteredProducts = products.filter((product) => {
-    // 如果没有选择，则显示所有产品
+  const filteredProducts = product.filter((product) => {
+    // 如果没有选择条件，返回 true
     if (
       selectedColors.length === 0 &&
       selectedNibs.length === 0 &&
       selectedMaterials.length === 0 &&
       priceRange[0] === initialPriceRange[0] &&
-      priceRange[1] === initialPriceRange[1]
-    )
+      priceRange[1] === initialPriceRange[1] &&
+      selectedBrand === '' &&
+      searchQuery === ''
+    ) {
       return true
+    }
 
     // 检查产品的颜色是否在选择的颜色中
     const isColorMatched =
-      selectedColors.length === 0 || selectedColors.includes(product.color)
+      selectedColors.length === 0 || selectedColors.includes(product.color_name)
 
     // 检查产品的笔尖是否在选择的笔尖中
     const isNibMatched =
-      selectedNibs.length === 0 || selectedNibs.includes(product.nib)
+      selectedNibs.length === 0 || selectedNibs.includes(product.nib_name)
 
     // 检查产品的材质是否在选择的材质中
     const isMaterialMatched =
       selectedMaterials.length === 0 ||
-      selectedMaterials.includes(product.material)
+      selectedMaterials.includes(product.material_name)
 
     // 检查产品的价格是否在选择的价格范围内
     const isPriceMatched =
       product.price >= priceRange[0] && product.price <= priceRange[1]
 
+    // 检查产品的品牌是否与选择的品牌匹配
+    const isBrandMatched =
+      selectedBrand === '' || selectedBrand === product.brand_name
+
+    const isNameMatched =
+      searchQuery === '' ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+
     // 返回是否满足所有选择条件
-    return isColorMatched && isNibMatched && isMaterialMatched && isPriceMatched
+    return (
+      isColorMatched &&
+      isNibMatched &&
+      isMaterialMatched &&
+      isPriceMatched &&
+      isBrandMatched &&
+      isNameMatched
+    )
   })
-  useEffect(() => {
-    setCurrentPage(1) // 筛选条件变化时重置页码为第一页
-  }, [selectedColors, selectedNibs, selectedMaterials, priceRange])
-
-
 
   const displayedProducts = filteredProducts.slice(startIndex, endIndex)
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 991)
+    }
+
+    // 初始加載時觸發一次檢測
+    checkIsMobile()
+
+    // 監聽窗口大小變化
+    window.addEventListener('resize', checkIsMobile)
+
+    // 在清理函數中移除事件監聽器
+    return () => {
+      window.removeEventListener('resize', checkIsMobile)
+    }
+  }, [setIsMobile])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // 构建 fetchUrl
+      let updatedFetchUrl = 'http://localhost:3005/api/myProduct?'
+      const newUrl = new URL(window.location.href)
+
+      // 根据排序选项添加对应的排序方式到 fetchUrl
+      if (sortingOption !== '') {
+        updatedFetchUrl += `sortingOption=${sortingOption}&`
+        newUrl.searchParams.set('sortingOption', sortingOption)
+      } else {
+        newUrl.searchParams.delete('sortingOption')
+      }
+
+      // 加入其他筛选条件到 fetchUrl
+      if (selectedColors.length > 0) {
+        updatedFetchUrl += `colors=${selectedColors.join(',')}&`
+        newUrl.searchParams.set('colors', selectedColors.join(','))
+      } else {
+        newUrl.searchParams.delete('colors')
+      }
+      if (selectedBrand.length > 0) {
+        updatedFetchUrl += `brands=${selectedBrand}&`
+        newUrl.searchParams.set('brands', selectedBrand)
+      } else {
+        newUrl.searchParams.delete('brands')
+      }
+      if (selectedNibs.length > 0) {
+        updatedFetchUrl += `nibs=${selectedNibs.join(',')}&`
+        newUrl.searchParams.set('nibs', selectedNibs.join(','))
+      } else {
+        newUrl.searchParams.delete('nibs')
+      }
+      if (selectedMaterials.length > 0) {
+        updatedFetchUrl += `materials=${selectedMaterials.join(',')}&`
+        newUrl.searchParams.set('materials', selectedMaterials.join(','))
+      } else {
+        newUrl.searchParams.delete('materials')
+      }
+      if (searchQuery.length > 0) {
+        updatedFetchUrl += `searchQuery=${searchQuery}&`
+        newUrl.searchParams.set('searchQuery', searchQuery)
+      } else {
+        newUrl.searchParams.delete('searchQuery')
+      }
+
+      // 移除最后的 '&' 符号
+      updatedFetchUrl = updatedFetchUrl.slice(0, -1)
+
+      try {
+        const response = await fetch(updatedFetchUrl)
+        const data = await response.json()
+
+        // 更新状态
+        setProduct(data.products)
+        setNib(data.nibs)
+        setColor(data.colors)
+        setBrand(data.brands)
+        setMaterial(data.materials)
+        setTotalPages(data.totalPages)
+        setCurrentPage(1)
+        window.history.pushState({}, '', newUrl.toString())
+        console.log(totalPages)
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    }
+
+    fetchData()
+  }, [
+    sortingOption,
+    selectedColors,
+    selectedBrand,
+    selectedNibs,
+    selectedMaterials,
+    searchQuery,
+  ])
 
   return (
     <>
       <div className="row mt-2 mb-3">
         <div className="col">
           <div className="d-flex align-items-center">
-            <span className="ps-3 text-h1 my-3 ">所有鋼筆</span>
+            <span className="ps-3 text-h1 my-3 ">
+              {selectedBrand ? selectedBrand : '所有鋼筆'}
+            </span>
           </div>
           <div className="card-text d-flex justify-content-between align-items-center ms-3">
             <nav
@@ -188,7 +273,10 @@ export default function List() {
               style={{ marginLeft: '230px' }}
             ></nav>
             {!isMobile && (
-              <div className="d-flex p-2 justify-content-end align-items-center">
+              <div className="d-flex p-2 justify-content-start align-items-center">
+                <div>
+                  <SearchForm onSearch={handleSearch}></SearchForm>
+                </div>
                 <div className="dropdown ms-3">
                   <button
                     className="btn dropdown-toggle my-text-contents-CH rounded-pill shadow"
@@ -205,7 +293,10 @@ export default function List() {
                           sortingOption === 'newest' ? 'active' : ''
                         }`}
                         href="#"
-                        onClick={() => setSortingOption('newest')}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setSortingOption('newest')
+                        }}
                       >
                         最新上架
                       </a>
@@ -216,7 +307,10 @@ export default function List() {
                           sortingOption === 'high-to-low' ? 'active' : ''
                         }`}
                         href="#"
-                        onClick={() => setSortingOption('high-to-low')}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setSortingOption('high-to-low')
+                        }}
                       >
                         價格：由高至低
                       </a>
@@ -227,7 +321,10 @@ export default function List() {
                           sortingOption === 'low-to-high' ? 'active' : ''
                         }`}
                         href="#"
-                        onClick={() => setSortingOption('low-to-high')}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setSortingOption('low-to-high')
+                        }}
                       >
                         價格：由低至高
                       </a>
@@ -242,8 +339,10 @@ export default function List() {
                   className="btn my-text-contents-CH rounded-pill shadow"
                   onClick={handleOpen}
                 >
-                  <span style={{ marginRight: '10px' }}>篩選</span>
-                  <FontAwesomeIcon icon={faSliders} />
+                  <span>
+                    篩選
+                    <FaSliders />
+                  </span>
                 </button>
 
                 <Dialog
@@ -271,7 +370,7 @@ export default function List() {
                         className="btn btn-secondary rounded-pill"
                         onClick={handleClose}
                       >
-                        <FontAwesomeIcon icon={faTimes} />
+                        ✕
                       </button>
                     </div>
 
@@ -598,11 +697,11 @@ export default function List() {
                       <div id="panelsStayOpen-collapseThree">
                         <div className="mt-5">
                           <Slider
-                            min={minPrice} // 使用动态计算的最小价格
-                            max={maxPrice} // 使用动态计算的最大价格
+                            min={1} // 使用动态计算的最小价格
+                            max={50000} // 使用动态计算的最大价格
                             step={100}
                             range
-                            defaultValue={[minPrice, maxPrice]} // 默认值设为动态计算的最小和最大价格
+                            defaultValue={[1, 50000]} // 默认值设为动态计算的最小和最大价格
                             value={priceRange}
                             onChange={handlePriceChange}
                           />
@@ -664,7 +763,11 @@ export default function List() {
                 >
                   {brand.map((brandItem) => (
                     <div className="me-2" key={brandItem.brand_id}>
-                      <button type="button" className="btn">
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() => handleBrandClick(brandItem.brand_name)}
+                      >
                         {brandItem.brand_name}
                       </button>
                     </div>
@@ -1009,11 +1112,11 @@ export default function List() {
                       >
                         <div style={{ margin: '20px' }}>
                           <Slider
-                            min={minPrice} // 使用动态计算的最小价格
-                            max={maxPrice} // 使用动态计算的最大价格
+                            min={1} // 使用动态计算的最小价格
+                            max={50000} // 使用动态计算的最大价格
                             step={100}
                             range
-                            defaultValue={[minPrice, maxPrice]} // 默认值设为动态计算的最小和最大价格
+                            defaultValue={[1, 50000]} // 默认值设为动态计算的最小和最大价格
                             value={priceRange}
                             onChange={handlePriceChange}
                           />
@@ -1038,15 +1141,16 @@ export default function List() {
                 {/* 循环渲染产品 */}
                 {displayedProducts.length > 0 ? (
                   displayedProducts.map((product) => (
-                    <div className="col" key={product.id}>
+                    <div className="col" key={product.product_id}>
                       <Link
-                        href={`/product/${product.id}`}
+                        href={`/product/${product.product_id}`}
+                        as={`/product/${product.product_id}`}
                         style={{ textDecoration: `none` }}
                       >
                         <ProductFigure
-                          key={product.id}
+                          key={product.product_id}
                           image={`/images/myProduct/${product.image}`}
-                          brand={product.brand}
+                          brand={product.brand_name}
                           name={product.name}
                           price={formatPrice(product.price)}
                         />
@@ -1054,7 +1158,7 @@ export default function List() {
                     </div>
                   ))
                 ) : (
-                  <p>查无数据</p>
+                  <p className='text-h3'>沒有符合的商品 . . . </p>
                 )}
               </div>
 
@@ -1083,7 +1187,7 @@ export default function List() {
         .btnColor:hover {
           opacity: 0.5;
         }
-               
+
         /* 滚动条的样式 */
         ::-webkit-scrollbar {
           height: 3px; /* 滚动条宽度 */

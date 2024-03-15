@@ -8,6 +8,8 @@ export default function OrderSummary({
   totalPrice = 0,
   formatPrice = () => {},
   handleNextSteap = () => {},
+  creatOrderAndPay = () => {},
+  shippingFee = 0,
 }) {
   return (
     <>
@@ -18,7 +20,7 @@ export default function OrderSummary({
         </div>
         <div className=" d-flex justify-content-between my-2 text-my-black">
           <div className="text-h5">運費</div>
-          <div className="text-h6">{formatPrice(888)}</div>
+          <div className="text-h6">{formatPrice(shippingFee)}</div>
         </div>
         <div className="d-flex justify-content-between my-2 text-my-black">
           <div className="text-h5">優惠折扣</div>
@@ -32,7 +34,10 @@ export default function OrderSummary({
 
         <div
           onClick={() => {
+            //checkout頁面
             handleNextSteap()
+            //confiramation頁面使用
+            creatOrderAndPay()
           }}
           className="col-md-8 my-4 mx-auto my-button1 pc-button show "
         >

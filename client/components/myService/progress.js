@@ -4,7 +4,7 @@ export default function Progress({ loading, setLoading }) {
   return (
     <>
       <div className="progress mt-4 mx-auto w-75 p-0">
-        <div className={`progress-${loading ? 'loading' : 'bar'} `} />
+        <div className={`progress-${loading ? 'loading' : 'bar'}`} />
       </div>
       <style jsx>{`
          {/* 發出請求時，會將className從progress-bar改成progress-loading，藉此執行動畫 */}

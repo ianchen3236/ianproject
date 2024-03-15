@@ -1,5 +1,6 @@
-export default function New(prop) {
-  const { date, title, message } = prop
+import { useState } from 'react'
+export default function New({ date, title, message }) {
+  const [open, setOpen] = useState(false)
   return (
     <>
       <article className="new mb-3">
@@ -8,7 +9,12 @@ export default function New(prop) {
             <div className="date">{date}</div>
             <div className="text_label">{title}</div>
           </div>
-          <p className="message">{message}</p>
+          <p
+            className={`news_content ${open ? '' : 'message'}`}
+            onClick={() => setOpen(!open)}
+          >
+            {message}
+          </p>
         </div>
       </article>
 
@@ -28,6 +34,9 @@ export default function New(prop) {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+        .news_content {
+          cursor: pointer;
         }
       `}</style>
     </>

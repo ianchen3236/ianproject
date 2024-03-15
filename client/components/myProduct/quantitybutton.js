@@ -1,31 +1,63 @@
 import React, { useState } from 'react'
+import { useCart } from '@/hooks/user-cart'
 
-export default function QuantityButton() {
-  const [quantity, setQuantity] = useState(1)
+export default function QuantityButton({ products, pid }) {
+  const [qty, setQuantity] = useState(1)
+  const { addCartItem } = useCart()
 
   const decreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1)
+    if (qty > 1) {
+      setQuantity(qty - 1)
     }
   }
 
   const increaseQuantity = () => {
-    setQuantity(quantity + 1)
+    setQuantity(qty + 1)
+  }
+
+  const addToCart = () => {
+    const selectedProduct = products.find(
+      (product) => product.product_id == pid
+    )
+    if (selectedProduct) {
+      const currentPageUrl = window.location.href
+      addCartItem({
+        type: 'general',
+        id: selectedProduct.product_id,
+        name: selectedProduct.name,
+        image: `/images/myProduct/${selectedProduct.image}`,
+        price: selectedProduct.price,
+        desc: selectedProduct.description,
+        brand: selectedProduct.brand_name,
+        color: selectedProduct.color_name,
+        nib: selectedProduct.nib_name,
+        material: selectedProduct.material_name,
+        url: currentPageUrl,
+        // qty: qty,
+      })
+    }
   }
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center">
+      {/* <div className="d-flex justify-content-between align-items-center m-3">
         <div className="quantity-selector">
           <button className="btn" onClick={decreaseQuantity}>
             -
           </button>
-          <div className="my-auto">{quantity}</div>
+          <div className="my-auto">{qty}</div>
           <button className="btn" onClick={increaseQuantity}>
             +
           </button>
         </div>
-      </div>
+      </div> */}
+
+      <button
+        className="btn btn-primary w-100 my-3 rounded-pill"
+        onClick={addToCart}
+      >
+        加入購物車
+      </button>
       <style jsx>{`
         .quantity-selector {
           justify-content: space-between;
