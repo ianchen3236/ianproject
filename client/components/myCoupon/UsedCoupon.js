@@ -1,39 +1,59 @@
 import React from 'react'
 import Link from 'next/link'
-
-export default function UsedCoupon({
-  couponKey,
-  coupon_name,
-  discount,
-  limit_time,
-  end_time,
-}) {
-  console.log(couponKey)
+import Swal from 'sweetalert2/dist/sweetalert2.js'
+import '@sweetalert2/theme-bootstrap-4/bootstrap-4.scss'
+export default function UsedCoupon({ coupon }) {
+  const get_coupon = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3005/api/coupon/get/?id_coupon=${coupon.id}`
+      )
+      const result = await response.json()
+      Swal.fire({
+        icon: result.status,
+        title: result.msg,
+        timer: 1500,
+      }).then(() => {
+        if (result.status === 'success') {
+          location.reload()
+        }
+      })
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
   return (
     <>
       <div className="col-xl-4 col-lg-6 col-sm-12 d-flex justify-content-center align-items-center">
-        <div className="coupon-background" Key={couponKey}>
+        <div className="coupon-background">
           {/* <img src="/images/myCoupon/coupon_background_02.png" alt="" /> */}
           <div className="text-container">
             <h3>
               {/* 歡慶鋼筆盛典！ */}
-              {coupon_name}
+              {coupon.coupon_name}
             </h3>
             <p className="discount m-0">
               {/* 85折優惠！ */}
-              {discount}
+              {coupon.discount_title}
             </p>
             <p className="expiration m-0">
               {/* 有效期限：2024.12.31 */}
-              {limit_time.split('T')[0]}
-           <b>~</b> 
+              {coupon.start_at.split('T')[0]}
+              <b>~</b>
               {/* 有效期限：2024.12.31 */}
-              {end_time.split('T')[0]}
+              {coupon.end_at.split('T')[0]}
             </p>
-            <a className='rule_link' href="">使用規則</a> 
-            <a href={`/product/list`} className="button">
-              已領取
+            <a className="rule_link" href="">
+              使用規則
             </a>
+            {!coupon.coupon_id && (
+              <a
+                onClick={get_coupon}
+                className={`${coupon.status == 0 ? 'button' : 'be_used'}`}
+              >
+                {coupon.status == 0 ? '未' : '已'}領取
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -52,7 +72,7 @@ export default function UsedCoupon({
             position: relative;
             justify-content: center; /* 水平置中 */
             align-items: center; /* 垂直置中 */
-            filter:drop-shadow(0px 0px 4px #9c9d9d) ;
+            filter: drop-shadow(0px 0px 4px #9c9d9d);
             & img {
               position: absolute;
               width: 100%;
@@ -81,10 +101,9 @@ export default function UsedCoupon({
               width: 100px;
               height: 200px;
               z-index: 999;
-              
             }
-            &:hover{
-              filter:drop-shadow(0px 0px 3px rgb(230 40 124 / 80%)) ;
+            &:hover {
+              filter: drop-shadow(0px 0px 3px rgb(230 40 124 / 80%));
             }
           }
           .text-container {
@@ -96,27 +115,26 @@ export default function UsedCoupon({
             h1 {
               font-size: 24px;
               color: #333;
-              
             }
-            h3{
-                white-space:nowrap;
-              overflow:hidden;
-              text-overflow:ellipsis;
+            h3 {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
             }
             p {
               color: #555;
               margin-bottom: 10px;
             }
-            b{
-              margin:0 5px;
+            b {
+              margin: 0 5px;
             }
-            .rule_link{
-              display:block;
-              color:#600;
-              
-              &:hover{
+            .rule_link {
+              display: block;
+              color: #600;
+
+              &:hover {
                 text-decoration: underline;
-                color:#f00;
+                color: #f00;
               }
             }
             .discount {
@@ -128,22 +146,33 @@ export default function UsedCoupon({
             .expiration {
               color: #777;
               line-height: 16px;
-              padding:8px 0 4px;
+              padding: 8px 0 4px;
             }
-            .button {
-              background: #e44d26;
+
+            .button,
+            .used,
+            .be_used {
               display: inline-block;
               padding: 3px 10px;
               border: 1.5px #fff solid;
               color: #fff;
               text-decoration: none;
               border-radius: 5px;
-              &:hover{ 
+              cursor: pointer;
+            }
+            .button {
+              background: #e44d26;
+              &:hover {
                 border: 1.5px #e44d26 solid;
-                color: #e44d26; 
-                background:#fff;
-                }
-                
+                color: #e44d26;
+                background: #fff;
+              }
+            }
+            .used {
+              background: #333333;
+            }
+            .be_used {
+              background: #999999;
             }
           }
           @media (max-width: 991px) {
@@ -154,7 +183,6 @@ export default function UsedCoupon({
           @media (max-width: 500px) {
             .coupon-background {
               background-size: cover;
-              
             }
           }
         `}

@@ -1,6 +1,6 @@
 import React from 'react'
-import UsedCoupon from '@/components/myCoupon/UsedCoupon'
 import { useState, useEffect } from 'react'
+import UsedCoupon from '@/components/myCoupon/UsedCoupon'
 
 export default function Home() {
   // 引入資料
@@ -8,11 +8,15 @@ export default function Home() {
   const [data_2, setData_2] = useState([])
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:3005/api/coupon/activity3000')
-      const response_2 = await fetch('http://localhost:3005/api/coupon/activity5000')
+      const response = await fetch(
+        'http://localhost:3005/api/coupon/activity/?type=1'
+      )
+      const response_2 = await fetch(
+        'http://localhost:3005/api/coupon/activity/?type=2'
+      )
       const result = await response.json()
       const result_2 = await response_2.json()
-      console.log(result)
+      console.log('res', result)
       console.log(result_2)
 
       setData(result)
@@ -29,7 +33,7 @@ export default function Home() {
   console.log(data)
   return (
     <>
-    {/* 3000折300$ */}
+      {/* 3000折300$ */}
       <div className="p-activity">
         <ul>
           <li>
@@ -62,19 +66,9 @@ export default function Home() {
           <li>
             <div className="row cols-lg-3 ">
               {data.map((v, i) => {
-                const { coupon_name, end_at, discount_title, start_at } = v
-                {
-                  /* console.log(v.start_at) */
+                if (v.coupon_valid === 1) {
+                  return <UsedCoupon key={v.id} coupon={v} />
                 }
-                return (
-                  <UsedCoupon
-                    key={v.id}
-                    coupon_name={v.coupon_name}
-                    discount={v.discount_title}
-                    limit_time={v.start_at}
-                    end_time={v.end_at}
-                  />
-                )
               })}
             </div>
           </li>
@@ -110,19 +104,9 @@ export default function Home() {
           <li>
             <div className="row row-cols-lg-3">
               {data_2.map((v, i) => {
-                const { coupon_name, end_at, discount_title, start_at } = v
-                {
-                  /* console.log(v.start_at) */
+                if (v.coupon_valid === 1) {
+                  return <UsedCoupon key={v.id} coupon={v} />
                 }
-                return (
-                  <UsedCoupon
-                    key={v.id}
-                    coupon_name={v.coupon_name}
-                    discount={v.discount_title}
-                    limit_time={v.start_at}
-                    end_time={v.end_at}
-                  />
-                )
               })}
             </div>
           </li>

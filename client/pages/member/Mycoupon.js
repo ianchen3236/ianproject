@@ -13,7 +13,9 @@ const CouponPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:3005/api/coupon/memberCoupon')
+        const response = await fetch(
+          'http://localhost:3005/api/coupon/memberCoupon'
+        )
         const data = await response.json()
         setData(data)
       } catch (error) {
@@ -22,10 +24,7 @@ const CouponPage = () => {
     }
 
     fetchData()
-    console.log('data', data)
-  }, []) 
-
-  
+  }, [])
 
   return (
     <>
@@ -33,7 +32,7 @@ const CouponPage = () => {
         <div className="coupon-content">
           <div className="coupon-content__title">我的優惠劵</div>
           <Tabs
-            defaultActiveKey="profile"
+            defaultActiveKey="home"
             id="uncontrolled-tab-example"
             className="mb-3"
           >
@@ -44,36 +43,55 @@ const CouponPage = () => {
                   <div className="container">
                     <div className="row row-cols-lg-3">
                       {data.map((v, i) => {
-                        const {
-                          coupon_name,
-                          end_at,
-                          discount_title,
-                          start_at,
-                        } = v
-                        {
-                          /* console.log(v.start_at) */
-                        }
-                        return (
-                          <UsedCoupon
-                            key={v.id}
-                            coupon_name={coupon_name}
-                            discount={discount_title}
-                            limit_time={start_at}
-                            end_time={end_at}
-                            onClick
-                          />
-                        )
+                        return <UsedCoupon key={v.id} coupon={v} />
                       })}
                     </div>
                   </div>
                 </div>
               </div>
             </Tab>
-            <Tab eventKey="used" title="已使用">
-              Tab content for Contact
+            <Tab eventKey="can_be_used" title="可使用">
+              <div className="coupon-content__list">
+                {/* 可以使用 map 遍歷渲染 */}
+                <div className="coupon-content__item">
+                  <div className="container">
+                    <div className="row row-cols-lg-3">
+                      {data.map((v, i) => {
+                        const now = Date.parse(new Date())
+                        const coupon_end = Date.parse(new Date(v.end_at))
+                        // 優惠券還有效 && 會員持有還有效
+                        if (
+                          v.valid === 1 &&
+                          v.coupon_valid !== 0 &&
+                          coupon_end >= now
+                        )
+                          return <UsedCoupon key={v.id} coupon={v} />
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </Tab>
             <Tab eventKey="contact" title="已逾期">
-              Tab content for Contact
+              <div className="coupon-content__list">
+                {/* 可以使用 map 遍歷渲染 */}
+                <div className="coupon-content__item">
+                  <div className="container">
+                    <div className="row row-cols-lg-3">
+                      {data.map((v, i) => {
+                        const now = Date.parse(new Date())
+                        const coupon_end = Date.parse(new Date(v.end_at))
+                        // 會員還能使用 但 優惠券已無效 或 超過時間期限
+                        if (
+                          v.valid === 1 &&
+                          (v.coupon_valid === 0 || coupon_end < now)
+                        )
+                          return <UsedCoupon key={v.id} coupon={v} />
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </Tab>
             {/* <Tab eventKey="contact" title="已使用" disabled>
               Tab content for Contact
